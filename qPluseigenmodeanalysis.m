@@ -1,6 +1,6 @@
 % --- 基本パラメータの設定 ---
 % 探針長さを固定 (3 mm)
-startl_point_end_l = 4.5e-3:0.1e-3:4.6e-3;%探針の長さ(m) 初期値：間隔：終了値
+startl_point_end_l = 0.5e-3:0.05e-3:5.0e-3;%探針の長さ(m) 初期値：間隔：終了値
 param.lc = 0.15e-3;     % 探針エッチング部分の長さ (m)
 param.Eq = 8.00e10;     % クオーツのヤング率 (Pa)
 param.L = 2.353e-3; %QTFprongの長さ (m)
@@ -31,6 +31,10 @@ for l_i = startl_point_end_l
          param.Mc * (param.h/2 + param.lb + 1/4 * param.lc)^2 + param.Ic + (param.d/2)^2 * param.Mtip;
     % 探針全体の慣性モーメント(m^4, 近似(0 < x2 and x2 < lb)の慣性モーメント無視, 中心;
    %x1 = L, z1 = 0 (x2 = -h/2);
+   l_mm = param.l*1e3;
+   lengthmessage = '/mmについて解析中';
+   length_mm_message = [num2str(l_mm), '/mmについて解析中'];
+   disp(length_mm_message);
 % ----------- root 探索本体 ------------
 % 探索範囲
 f_min = 1e3;
@@ -66,7 +70,7 @@ for i = 2:N_points
 
         root = (f_left + f_right) / 2;
         roots_found(end+1) = root;
-        fprintf('%.8f Hz の根を発見しました。\n', root);
+        fprintf('%.8f Hz を発見しました。\n', root);
 
         if length(roots_found) == 3
             break;
@@ -91,17 +95,17 @@ fprintf('f_fre_3: %.8f Hz\n', f_fre_3);
 % f_fre_1 に対して X を求める
 [M3x3_1, B1] = compute_M3x3_and_B(f_fre_1,param);
 X1 = M3x3_1 \ B1;
-disp('X1 ='); disp(X1);
+%disp('X1 ='); disp(X1);
 
 % f_fre_2 に対して
 [M3x3_2, B2] = compute_M3x3_and_B(f_fre_2,param);
 X2 = M3x3_2 \ B2;
-disp('X2 ='); disp(X2);
+%disp('X2 ='); disp(X2);
 
 % f_fre_3 に対して
 [M3x3_3, B3] = compute_M3x3_and_B(f_fre_3,param);
 X3 = M3x3_3 \ B3;
-disp('X3 ='); disp(X3);
+%disp('X3 ='); disp(X3);
 
 % f_fre_1 に対してk_eff_v,k_eff_l,Angleを求める
 [k1_eff_v, k1_eff_l,angle1,dw_le_1,dw1_1,dw2_1] = compute_k_theta(X1(1),X1(2),X1(3),X1(4),X1(5),f_fre_1,param);
