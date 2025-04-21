@@ -1,6 +1,6 @@
 % --- 基本パラメータの設定 ---
 % 探針長さを固定 (3 mm)
-startl_point_end_l = 3.0e-3:0.1e-3:3.5e-3;%探針の長さ(m) 初期値：間隔：終了値
+startl_point_end_l = 4.5e-3:0.1e-3:4.6e-3;%探針の長さ(m) 初期値：間隔：終了値
 param.lc = 0.15e-3;     % 探針エッチング部分の長さ (m)
 param.Eq = 8.00e10;     % クオーツのヤング率 (Pa)
 param.L = 2.353e-3; %QTFprongの長さ (m)
@@ -104,7 +104,7 @@ X3 = M3x3_3 \ B3;
 disp('X3 ='); disp(X3);
 
 % f_fre_1 に対してk_eff_v,k_eff_l,Angleを求める
-[k1_eff_v, k1_eff_l,angle1] = compute_k_theta(X1(1),X1(2),X1(3),X1(4),X1(5),f_fre_1,param);
+[k1_eff_v, k1_eff_l,angle1,dw_le_1,dw1_1,dw2_1] = compute_k_theta(X1(1),X1(2),X1(3),X1(4),X1(5),f_fre_1,param);
 
 % 結果の表示
 disp('eigenmode1')
@@ -113,7 +113,7 @@ fprintf('k1_eff_v = %.3f\n', k1_eff_v);
 fprintf('Angle1 = %.3f\n', angle1);
 
 % f_fre_2 に対してk_eff_v,k_eff_l,Angleを求める
-[k2_eff_v, k2_eff_l,angle2] = compute_k_theta(X2(1),X2(2),X2(3),X2(4),X2(5),f_fre_2,param);
+[k2_eff_v, k2_eff_l,angle2,dw_le_2,dw1_2,dw2_2] = compute_k_theta(X2(1),X2(2),X2(3),X2(4),X2(5),f_fre_2,param);
 
 % 結果の表示
 disp('eigenmode2')
@@ -122,7 +122,7 @@ fprintf('k2_eff_v = %.3f\n', k2_eff_v);
 fprintf('Angle2 = %.3f\n', angle2);
 
 % f_fre_3 に対してk_eff_v,k_eff_l,Angleを求める
-[k3_eff_v, k3_eff_l,angle3] = compute_k_theta(X3(1),X3(2),X3(3),X3(4),X3(5),f_fre_3,param);
+[k3_eff_v, k3_eff_l,angle3,dw_le_3,dw1_3,dw2_3] = compute_k_theta(X3(1),X3(2),X3(3),X3(4),X3(5),f_fre_3,param);
 
 % 結果の表示
 disp('eigenmode3')
@@ -132,16 +132,17 @@ fprintf('Angle3 = %.3f\n', angle3);
 
 % 結果を保存
 results = [results; double([param.l*1e3, f_fre_1, k1_eff_v, k1_eff_l,angle1, X1(1),X1(2), ...
-    X1(3),X1(4),X1(5),f_fre_2, k2_eff_v, k2_eff_l,angle2,X2(1),X2(2), X2(3),X2(4),X2(5)...
-    f_fre_3, k3_eff_v, k3_eff_l,angle3,X3(1),X3(2), X3(3),X3(4),X3(5)])];  % 単位:mm, Hz
+    X1(3),X1(4),X1(5),dw_le_1,dw1_1,dw2_1,f_fre_2, k2_eff_v, k2_eff_l,angle2,X2(1),X2(2),...
+    X2(3),X2(4),X2(5),dw_le_2,dw1_2,dw2_2,f_fre_3, k3_eff_v, k3_eff_l,angle3,X3(1),X3(2),...
+    X3(3),X3(4),X3(5),dw_le_3,dw1_3,dw2_3])];  % 単位:mm, Hz
 
 end
 
 % テーブル表示
 T = array2table(results, 'VariableNames', {'l_mm', 'f1_Hz', 'k1_eff_v', 'k1_eff_l','angle1','X1(1)','X1(2)', ...
-    'X1(3)','X1(4)','X1(5)','f2_Hz', 'k2_eff_v', 'k2_eff_l','angle2','X2(1)','X2(2)', ...
-    'X2(3)','X2(4)','X2(5)','f3_Hz','k3_eff_v', 'k3_eff_l','angle3','X3(1)','X3(2)', ...
-    'X3(3)','X3(4)','X3(5)'});
+    'X1(3)','X1(4)','X1(5)','dw_le_1','dw1_1','dw2_1','f2_Hz', 'k2_eff_v', 'k2_eff_l','angle2','X2(1)','X2(2)', ...
+    'X2(3)','X2(4)','X2(5)','dw_le_2','dw1_2','dw2_2','f3_Hz','k3_eff_v', 'k3_eff_l','angle3','X3(1)','X3(2)', ...
+    'X3(3)','X3(4)','X3(5)','dw_le_3','dw1_3','dw2_3',});
 disp(T)
 
 %-------- compute_detMの定義 ------------
@@ -261,7 +262,7 @@ function [M3x3, B] = compute_M3x3_and_B(freq_M,param)
             0, M63_3, M64_3, M65_3, M66_3];
 end
 %共振1
-function [k_eff_v, k_eff_l,angle_abs] = compute_k_theta(X1,X2,X3,X4,X5,f,param)
+function [k_eff_v, k_eff_l,angle_abs,dw_Le,dw1,dw2] = compute_k_theta(X1,X2,X3,X4,X5,f,param)
 omegak = 2 * pi * f;
 ak = ((omegak^2 * param.rho_q * param.Aq) / (param.Eq * param.Iq))^(1/4);
 bk = ((omegak^2 * param.rho_w * param.Aw) / (param.Ew * param.Iw))^(1/4);
@@ -287,14 +288,14 @@ u = @(z1)(D1*sin(bk*z1)+D2*cos(bk*z1)+D3*sinh(bk*z1)+D4*cosh(bk*z1))/wL;
 %ylabel('w / mm');grid on;
 
 A1_val = 1 + (1/2)*ak*(C1*(cos(ak*param.L) - cosh(ak*param.L)) + C2*(-sin(ak*param.L) - sinh(ak*param.L)))*param.d/wL;
-dw = @(Le) ak*(C1*(cos(ak*param.Le) - cosh(ak*param.Le)) + C2*(-sin(ak*param.Le) - sinh(ak*param.Le)))/wL;
+dw_Le = ak*(C1*(cos(ak*param.Le) - cosh(ak*param.Le)) + C2*(-sin(ak*param.Le) - sinh(ak*param.Le)))/wL;
 % A2 の計算
 A2 = @(lb) (D1*sin(bk*lb)+D2*cos(bk*lb)+D3*sinh(bk*lb)+D4*cosh(bk*lb))/wL + ...
     (bk*(D1*cos(bk*lb) - D2*sin(bk*lb) + D3*cosh(bk*lb) + D4*sinh(bk*lb)))/wL*param.lc;
 A2_val = A2(param.lb);
 % dw1 と dw2 の計算
-dw1 = dw(param.Le) / A1_val;
-dw2 = dw(param.Le) / A2_val;
+dw1 = dw_Le / A1_val;
+dw2 = dw_Le / A2_val;
 
 % d2w と d2u の計算
 d2w = @(x) ak^2*(C1*(-sin(ak*x) - sinh(ak*x)) + C2*(-cos(ak*x) - cosh(ak*x))) / wL;
